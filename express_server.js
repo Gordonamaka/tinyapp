@@ -37,15 +37,15 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 
-
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  
+  res.send("Hello! Add '/urls' to your address bar to continue to the tiny url app!");
+
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
 
 app.listen(PORT, () => {
-  console.log(`Tinyapp listening on port ${PORT}!`);
+
+  console.log(`Brace yourself! Tinyapp listening on port ${PORT}!`);
+
 });
