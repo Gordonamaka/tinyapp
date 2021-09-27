@@ -4,10 +4,10 @@ const PORT = 8080; // default port 8080
 
 
 app.set("view engine", "ejs");
-// added in descriptors in the urldatabase to distingush them in the tinyurl form. works fine
+
 const urlDatabase = {
-  "b2xLHLVn2": "http://www.lighthouselabs.ca",
-  "9smGOOGLE5xK": "http://www.google.com"
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
 };
 
 app.get("/urls", (req, res) => {
@@ -15,6 +15,19 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
 
   res.render("urls_index", templateVars);
+});
+
+app.get("/urls/:shortURL", (req, res) => {
+
+  const templateVars = {
+    
+    shortURL: req.params.shortURL, 
+    longURL: req.params.longURL
+  
+  };
+
+  res.render("urls_show", templateVars);
+
 });
 
 
@@ -28,5 +41,5 @@ app.get("/hello", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`Tinyapp listening on port ${PORT}!`);
 });
