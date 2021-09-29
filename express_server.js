@@ -12,15 +12,10 @@ app.set("view engine", "ejs");
 function generateRandomString() {
   const result = Math.random().toString(36).substring(2,7)
   return result;
-  // Alternative below.
 }
 
-const newShortURL = generateRandomString();
-
 app.get("/urls/new", (req, res) => {
-  
   res.render("urls_new");
-
 });
 
 const urlDatabase = {
@@ -29,49 +24,56 @@ const urlDatabase = {
 };
 
 app.get("/urls", (req, res) => {
-  
   const templateVars = { urls: urlDatabase };
-
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-
   const shortURL = req.params.shortURL;
-
   const templateVars = {
     shortURL: shortURL, 
     longURL: urlDatabase[shortURL]
   }
-
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL]
+  console.log("shortURL", shortURL)
+  console.log("longURL", longURL)
+  if (!(longURL)) {
+    res.send("URL does not exist :(");
+    return;
+  };
   res.redirect(longURL);
 });
 
 /* Edge cases
-What would happen if a client requests a non-existent shortURL? You should be returned to a, cannot get "".
-What happens to the urlDatabase when the server is restarted? You lose your urls
 What type of status code do our redirects have? What does this status code mean? 200
 */
 
-
-// the longUrl is technically where you got the urldatabase for the short url, that being req.body.longURL in line 48.
+// the longUrl is technically where you got the urldatabase for the short url, that being req.body.longURL
 app.post("/urls", (req, res) => {
-  urlDatabase[newShortURL] = req.body.longURL
-  console.log(req.body);  // Log the POST request body to the console
-  res.redirect("/urls/:shortURL"); // Respond with the random string we generated 
+  const newShortURL = generateRandomString();
+  let longUrl = req.body.longURL // setup for the conditional
+    if (!(longUrl.includes('http'))) { //.includes tells you whether a value exists, even strings like http
+      longUrl = `https://${longUrl}`
+    };
+  urlDatabase[newShortURL] = longUrl 
+  console.log(urlDatabase);  // Log the POST request body to the console
+  res.redirect(`/urls/${newShortURL}`); // Respond with the random string we generated 
 });
-
-// we created a new variable in order to use the function
-// we didnt need template literals because req.body.longURL already returns a string!
 // need a redirect to /urls:shortURL with the function generator to present the change. Did this by res.redirect the template literal of the variable which is the new shortURL, which is something that express is able to pick up on (Thank God) 
 // Our new key value assigned is the shortURL
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  
+  const shortURL = req.params.shortURL;
+  delete urlDatabase.shortURL;
+  console.log(urlDatabase);
+  res.redirect("/urls");
+})
 
 app.get("/", (req, res) => {
   
