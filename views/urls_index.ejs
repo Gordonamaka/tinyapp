@@ -32,13 +32,13 @@
             <td>
               <form method='GET' action="/urls/<%= url %>">
 
-                <button type='submit'style="background-color:Aqua"><b>Edit</b></button>
+                <button class="btn btn-outline-info" type='submit'style="background-color:Aqua"><b>Edit</b></button>
                 </form>
             </td>
             <td>
               <form method='POST' action="/urls/<%= url %>/delete">
 
-              <button type='submit'style="background-color:red"><b>Delete</b></button>
+              <button  class="btn-outline-danger" type='submit'style="background-color:red"><b>Delete</b></button>
               </form>  
             </td>
           </tr>
