@@ -14,6 +14,10 @@ function generateRandomString() {
   return result;
 }
 
+function editedUrl() {
+  
+}
+
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
@@ -56,7 +60,7 @@ What type of status code do our redirects have? What does this status code mean?
 // the longUrl is technically where you got the urldatabase for the short url, that being req.body.longURL
 app.post("/urls", (req, res) => {
   const newShortURL = generateRandomString();
-  let longUrl = req.body.longURL // setup for the conditional
+  let longUrl = req.body.longURL 
     if (!(longUrl.includes('http'))) { //.includes tells you whether a value exists, even strings like http
       longUrl = `https://${longUrl}`
     };
@@ -64,8 +68,15 @@ app.post("/urls", (req, res) => {
   console.log(urlDatabase);  // Log the POST request body to the console
   res.redirect(`/urls/${newShortURL}`); // Respond with the random string we generated 
 });
-// need a redirect to /urls:shortURL with the function generator to present the change. Did this by res.redirect the template literal of the variable which is the new shortURL, which is something that express is able to pick up on (Thank God) 
-// Our new key value assigned is the shortURL
+
+// the shortURL direciton for the edit button on /urls
+app.post("/urls/:shortURL/Edit", (req,res) => {
+  // Update an existing URL in our database
+  const shortURL = req.params.shortURL;
+  const templateVars = { urls: urlDatabase };
+  res.redirect(`/urls/${req.params.shortURL}`)
+});
+
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   
@@ -73,7 +84,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[shortURL];
   console.log(urlDatabase);
   res.redirect("/urls");
-})
+});
+
+// the shortURL direction for the edit button in Urls_show.ejs
+app.post("/urls/:shortURL", (req, res) => {
+
+
+});
+
 
 app.get("/", (req, res) => {
   
@@ -87,13 +105,3 @@ app.listen(PORT, () => {
   console.log(`Brace yourself! Tinyapp listening on port ${PORT}!`);
 
 });
-
-
-/* let result = '';
-  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let charactersLength = characters.length;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-*/
