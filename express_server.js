@@ -9,23 +9,20 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs");
 
+const urlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
+};
+
 function generateRandomString() {
   const result = Math.random().toString(36).substring(2,7)
   return result;
 }
 
-function editedUrl() {
-  
-}
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
-
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -69,29 +66,23 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newShortURL}`); // Respond with the random string we generated 
 });
 
-// the shortURL direciton for the edit button on /urls
-app.post("/urls/:shortURL/Edit", (req,res) => {
-  // Update an existing URL in our database
-  const shortURL = req.params.shortURL;
-  const templateVars = { urls: urlDatabase };
-  res.redirect(`/urls/${req.params.shortURL}`)
-});
 
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  
+
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
-  console.log(urlDatabase);
   res.redirect("/urls");
 });
 
 // the shortURL direction for the edit button in Urls_show.ejs
 app.post("/urls/:shortURL", (req, res) => {
-
-
+  // replace the longurl that already exists urldatabase.longUrl = req.body
+  urlDatabase[req.params.shortURL] = `https://${req.body.longURL}`;
+  console.log(urlDatabase[req.params.shortURL]);
+  res.redirect("/urls");
 });
-
+// What if what they want to update isn't a website.
 
 app.get("/", (req, res) => {
   
