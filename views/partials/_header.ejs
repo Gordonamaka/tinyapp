@@ -1,7 +1,8 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
+      aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
@@ -10,14 +11,16 @@
         <a class="nav-item nav-link" href="/urls/new"><b>Create New URL</b></a>
       </div>
     </div>
-        <% if (user && user.username)  { %> 
-          <h4>Welcome: <%= user.username %>!</h4> 
-          <form method='POST' action='/logout'><button type='submit' class="btn btn-secondary"> <b> Logout </b> </button>
-          </form>
-        <% } else { %>
-          <form method="POST" action="/login">
-              <input type="text" name="username"> <b> Login </b> <button type='submit' class="btn btn-primary" ><b>Sign In</b></button></a>
-          </form>            
-        <% } %>       
+    <% if (user && user.id) { %>
+      <h4>Welcome: <%= user.email %>!</h4>
+      <form method='POST' action='/logout'><button type='submit' class="btn btn-secondary"> <b> Logout </b> </button>
+      </form>
+      <% } else { %>
+        <form method='GET' action='/register'> <button type='submit' class="btn btn-link" href="/register"><b>
+              Register </b></button></form>
+        <form method='GET' action="/login"><button type='submit'
+          class="btn btn-link" href="/login"><b>Login</b></button></a>
+        </form>
+        <% } %>
   </nav>
 </header>
