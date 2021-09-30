@@ -3,6 +3,7 @@ const { name } = require("ejs");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
+const { savedUrls, authenticateUser, emptyInput, findUserByEmail, regUserId, generateRandomString } = require("./helperfunctions");
 const app = express();
 const PORT = 8080;
 app.set("view engine", "ejs");
@@ -17,77 +18,32 @@ const users = {
   "userRandomID": {
     id: 'userRandomID',
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "test1"
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "test2"
   }
 };
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL:  "http://www.lighthouselabs.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "http://www.google.com",
+    userID: "aJ48lW"
+  }
 };
-// global flag to identify whether the email is wrong or password is wrong
+
+
 let emailExists = false
 let passwordExists = false
 
-function generateRandomString() {
-  const result = Math.random().toString(36).substring(2, 7)
-  return result;
-};
-// user registation function
-const regUserId = function (email, password, users) {
-  const userId = generateRandomString();
-  users[userId] = {
-    id: userId,
-    email,
-    password,
-  };
-  return userId
-};
-// User already exists function
-const findUserByEmail = (email, users) => {
-  for (let userId in users) {
-    const user = users[userId];
-    if (email === user.email) {
-      return user;
-    };
-  };
-  return null;
-};
-
-// no input helper function
-const emptyInput = (email, password) => {
-  if (!email || !password) {
-    return true
-  }
-  return false;
-};
-
-// User authentication for login
-const authenticateUser = (email, password, users) => {
-  const user = findUserByEmail(email, users);
-  if (!user) {
-    emailExists = false;
-  } else {
-    emailExists = true;
-  }
-  if (user && user.password === password) {
-    passwordExists = true;
-    return user;
-  } else {
-    passwordExists = false;
-  }
-  console.log("Password is incorrect");
-  return null
-};
-
 
 app.post("/login", (req, res) => {
-
   console.log("Attempting to login");
   const email = req.body.email;
   const password = req.body.password;
@@ -98,10 +54,10 @@ app.post("/login", (req, res) => {
     return res.redirect("/urls");
   }
   if (!emailExists) {
-    return res.status(403).send("Email does not exist");
+    return res.status(403).send("Email does not exist.");
   }
   if (!passwordExists) {
-    return res.status(403).send("Password does not exist");
+    return res.status(403).send("Password does match the email provided.");
   }
   return;
 });
@@ -140,7 +96,6 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  // user is null, get is what happens when you first enter the page
   const templateVars = {
     user: null
   };
@@ -148,59 +103,89 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user: users
+  const userId = req.cookies["user_id"]
+  const updatedShortUrl = savedUrls(userId, urlDatabase);
+  if (!userId) {
+    return res.status(403).redirect("/login")
   };
+  const templateVars = {
+    urls: updatedShortUrl,
+    user: users[userId]
+  };
+
+  res.cookie("user_id", userId);
   res.render("urls_new", templateVars);
 });
 
-// keep cookie user exists, redirect back to the login etc
+
 app.get("/urls", (req, res) => {
   const userId = req.cookies["user_id"];
+  const updatedShortUrl = savedUrls(userId, urlDatabase);
+  console.log(updatedShortUrl);
   const templateVars = {
-    urls: urlDatabase,
+    urls: updatedShortUrl,
     user: users[userId]
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  const userId = req.cookies["user_id"];
   const shortURL = req.params.shortURL;
+  const updatedShortUrl = savedUrls(userId, urlDatabase);
   const templateVars = {
-    user: users,
-    shortURL: shortURL, //req.params.shortURL
-    longURL: urlDatabase[shortURL] // ""
+    user: users[req.cookies['user_id']],
+    urls: updatedShortUrl,
+    shortURL: shortURL,
+    longURL: urlDatabase[shortURL].longURL 
   }
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  const userId = req.cookies["user_id"]
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   if (!(longURL)) {
     res.status(200).send("URL does not exist :(");
     return;
   };
+  res.cookie("user_id", userId);
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
+  const userId = req.cookies["user_id"]
+  if (!userId) {
+    return res.status(403).redirect("/login")
+  };
   const newShortURL = generateRandomString();
   let longUrl = req.body.longURL
-  if (longUrl && !(longUrl.includes('http'))) { 
+  if (longUrl && !(longUrl.includes('http'))) {
     longUrl = `https://${longUrl}`
   };
-  urlDatabase[newShortURL] = longUrl;
+  
+  urlDatabase[newShortURL] = {};
+  urlDatabase[newShortURL].longURL = longUrl;
+  urlDatabase[newShortURL].userID = userId
+
+  console.log("urlDatabase", urlDatabase);
+
+  res.cookie("user_id", userId);
   res.redirect(`/urls/${newShortURL}`);
 });
 
-
 app.post("/urls/:shortURL", (req, res) => {
+  const userId = req.cookies["user_id"]
   urlDatabase[req.params.shortURL] = `https://${req.body.longURL}`;
+  
+  console.log("urlDatabase", urlDatabase);
   console.log(urlDatabase[req.params.shortURL]);
+
+  res.cookie("user_id", userId);
   res.redirect("/urls");
 });
+
 // What if what they input an update that isn't a website?
 
 app.post("/urls/:shortURL/delete", (req, res) => {
