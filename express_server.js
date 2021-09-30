@@ -3,7 +3,6 @@ const { name } = require("ejs");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
-const e = require("express");
 const app = express();
 const PORT = 8080;
 app.set("view engine", "ejs");
@@ -180,20 +179,16 @@ app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
   if (!(longURL)) {
-    res.send("URL does not exist :(");
+    res.status(200).send("URL does not exist :(");
     return;
   };
   res.redirect(longURL);
 });
 
-/* Edge cases
-What type of status code do our redirects have? What does this status code mean? 200
-*/
-
 app.post("/urls", (req, res) => {
   const newShortURL = generateRandomString();
   let longUrl = req.body.longURL
-  if (longUrl && !(longUrl.includes('http'))) { //.includes tells you whether a value exists, even strings like http
+  if (longUrl && !(longUrl.includes('http'))) { 
     longUrl = `https://${longUrl}`
   };
   urlDatabase[newShortURL] = longUrl;
