@@ -1,3 +1,6 @@
+const bcrypt = require('bcryptjs');
+
+
 // findUserbyemail
 const findUserByEmail = (email, users) => {
   for (let userId in users) {
@@ -23,7 +26,7 @@ const emptyInput = function (email, password) {
   // const email = req.body["email"];
   // const password = req.body["password"];
   if (email || password === '') {
-    res.status(400).send('Sorry, user must fill in their email & password to register');
+    // res.status(400).send('Sorry, user must fill in their email & password to register');
     return
   };
 };
@@ -35,7 +38,7 @@ const authenticateUser = (email, password, users) => {
   } else {
     emailExists = true;
   }
-  if (user && user.password === password) {
+  if (user && bcrypt.compareSync(password, user.password)) {
     passwordExists = true;
     return user;
   } else {
@@ -52,7 +55,7 @@ function generateRandomString() {
 };
 
 // savedUrls helper function
-const savedUrls = function(id, urlData) {
+const savedUrls = function (id, urlData) {
   const updatedUrls = {};
   const keys = Object.keys(urlData);
   for (const key of keys) {
@@ -65,7 +68,7 @@ const savedUrls = function(id, urlData) {
 
 
 
-module. exports = {
+module.exports = {
 
   generateRandomString,
   savedUrls,

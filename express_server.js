@@ -1,35 +1,32 @@
 const express = require("express");
 const { name } = require("ejs");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const { savedUrls, authenticateUser, emptyInput, findUserByEmail, regUserId, generateRandomString } = require("./helperfunctions");
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080;
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
 app.use(cookieSession({
   name: "session",
   keys: ["Some way to encrypt the values", "Sugar smack sugar smack give me a smack and I'll smack ya back"]
 }));
 
+const password = "test1";
+const hashedPassword = bcrypt.hashSync(password, 10);
+
 const users = {
   "userRandomID": {
     id: 'userRandomID',
     email: "user@example.com",
-    password: "test1"
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "test2"
+    password: hashedPassword
   }
 };
 
 const urlDatabase = {
   b6UTxQ: {
-    longURL:  "http://www.lighthouselabs.ca",
+    longURL: "http://www.lighthouselabs.ca",
     userID: "aJ48lW"
   },
   i3BoGr: {
@@ -38,19 +35,16 @@ const urlDatabase = {
   }
 };
 
-
 let emailExists = false
 let passwordExists = false
-
 
 app.post("/login", (req, res) => {
   console.log("Attempting to login");
   const email = req.body.email;
   const password = req.body.password;
   const authenticatedUser = authenticateUser(email, password, users);
-  console.log(authenticatedUser)
-  if (authenticatedUser) {
-    res.cookie("user_id", authenticatedUser.id)
+  if (bcrypt.compareSync(password, authenticatedUser.password)) {
+    req.session.user_id = authenticatedUser.id;
     return res.redirect("/urls");
   }
   if (!emailExists) {
@@ -63,13 +57,14 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 });
 
 app.post("/register", (req, res) => {
   const email = req.body["email"];
   const password = req.body["password"];
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (emptyInput(email, password) === true) {
     return res.status(400).send("Error: You need to provide both an email and password to register!");
@@ -82,9 +77,9 @@ app.post("/register", (req, res) => {
     return;
   };
 
-  const userId = regUserId(email, password, users);
+  const userId = regUserId(email, hashedPassword, users);
   console.log(users);
-  res.cookie("user_id", userId);
+  req.session.user_id = userId;
   res.redirect("/urls");
 });
 
@@ -103,7 +98,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const userId = req.cookies["user_id"]
+  const userId = req.session.user_id;
   const updatedShortUrl = savedUrls(userId, urlDatabase);
   if (!userId) {
     return res.status(403).redirect("/login")
@@ -113,15 +108,14 @@ app.get("/urls/new", (req, res) => {
     user: users[userId]
   };
 
-  res.cookie("user_id", userId);
+  req.session.user_id = userId;
   res.render("urls_new", templateVars);
 });
 
 
 app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.user_id;
   const updatedShortUrl = savedUrls(userId, urlDatabase);
-  console.log(updatedShortUrl);
   const templateVars = {
     urls: updatedShortUrl,
     user: users[userId]
@@ -130,32 +124,35 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.user_id;
   const shortURL = req.params.shortURL;
   const updatedShortUrl = savedUrls(userId, urlDatabase);
   const templateVars = {
-    user: users[req.cookies['user_id']],
+    user: users[req.session.user_id],
     urls: updatedShortUrl,
     shortURL: shortURL,
-    longURL: urlDatabase[shortURL].longURL 
+    longURL: urlDatabase[shortURL].longURL
   }
+  console.log("templateVars", templateVars);
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const userId = req.cookies["user_id"]
+  const userId = req.session.user_id;
   const shortURL = req.params.shortURL;
+  if (!urlDatabase[shortURL]) {
+    return res.status(200).send("URL does not exist :(");
+  }
   const longURL = urlDatabase[shortURL].longURL;
   if (!(longURL)) {
-    res.status(200).send("URL does not exist :(");
-    return;
+    return res.status(200).send("URL does not exist :(");
   };
-  res.cookie("user_id", userId);
+  req.session.user_id = userId; 
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
-  const userId = req.cookies["user_id"]
+  const userId = req.session.user_id;
   if (!userId) {
     return res.status(403).redirect("/login")
   };
@@ -164,32 +161,35 @@ app.post("/urls", (req, res) => {
   if (longUrl && !(longUrl.includes('http'))) {
     longUrl = `https://${longUrl}`
   };
-  
+
   urlDatabase[newShortURL] = {};
   urlDatabase[newShortURL].longURL = longUrl;
   urlDatabase[newShortURL].userID = userId
 
-  console.log("urlDatabase", urlDatabase);
-
-  res.cookie("user_id", userId);
+  req.session.user_id = userId;
   res.redirect(`/urls/${newShortURL}`);
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  const userId = req.cookies["user_id"]
-  urlDatabase[req.params.shortURL] = `https://${req.body.longURL}`;
-  
-  console.log("urlDatabase", urlDatabase);
-  console.log(urlDatabase[req.params.shortURL]);
+  const userId = req.session.user_id;
+  urlDatabase[req.params.shortURL] = { longURL: `https://${req.body.longURL}`, userID: userId };
 
-  res.cookie("user_id", userId);
+  req.session.user_id = userId;
   res.redirect("/urls");
 });
 
 // What if what they input an update that isn't a website?
 
+
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const userId = req.session.user_id; 
   const shortURL = req.params.shortURL;
+   
+  if (urlDatabase[shortURL].userID !== userId) {
+    res.send("Sorry, you dont have permission to delete other user's url");
+    return;
+  };
+    
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });

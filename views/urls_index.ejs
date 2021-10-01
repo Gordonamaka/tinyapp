@@ -30,31 +30,33 @@
         <tbody>
           <% if (!user) { %>
             <h2>You must either register as a new user or login to use TinyApp!</h2>
-         <% } else { %>
-        
-          <% for(let url in urls) { %>
-            <tr>
-              <td>
-                <%= url %>
-              </td>
-              <td>
-                <%= urls[url].longURL %>
-              </td>
-              <td>
-                <form method='GET' action="/urls/<%= url %>">
+            <% } else { %>
 
-                  <button class="btn btn-outline-info" type='submit' style="background-color:Aqua"><b>Edit</b></button>
-                </form>
-              </td>
-              <td>
-                <form method='POST' action="/urls/<%= url %>/delete">
+              <% for(let url in urls) { %>
+                <tr>
+                  <td>
+                    <%= url %>
+                  </td>
+                  <td>
+                    <%= urls[url].longURL %>
+                  </td>
+                  <td>
+                    <form method='GET' action="/urls/<%= url %>">
 
-                  <button class="btn btn-outline-dark" type='submit' style="background-color:red"><b>Delete</b></button>
-                </form>
-              </td>
-            </tr>
-            <% } %>
-        <% } %>
+                      <button class="btn btn-outline-info" type='submit'
+                        style="background-color:Aqua"><b>Edit</b></button>
+                    </form>
+                  </td>
+                  <td>
+                    <form method='POST' action="/urls/<%= url %>/delete">
+
+                      <button class="btn btn-outline-dark" type='submit'
+                        style="background-color:red"><b>Delete</b></button>
+                    </form>
+                  </td>
+                </tr>
+                <% } %>
+                  <% } %>
         </tbody>
       </table>
     </main>
