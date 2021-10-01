@@ -4,13 +4,14 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 Check Docs file for screenshots of the web application.
-!["Urls page before login"](#01/04)
 
-!["Urls creation page"](#02/04)
+!["Urls page before login"](https://github.com/Gordonamaka/tinyapp/blob/master/docs/urls-page-before-login.png?raw=true)
 
-!["Urls edit page"](#03/04)
+!["Urls creation page"](https://github.com/Gordonamaka/tinyapp/blob/master/docs/create-tinyURL-page.png?raw=true)
 
-!["Urls page after login with newly created urls"](#04/04)
+!["Urls edit page"](https://github.com/Gordonamaka/tinyapp/blob/master/docs/short-url-edit-page.png?raw=true)
+
+!["Urls page after login with newly created urls"](https://github.com/Gordonamaka/tinyapp/blob/master/docs/urls-page-with-new-short-urls.png?raw=true)
 
 ## Dependencies
 
