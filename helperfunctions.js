@@ -9,7 +9,7 @@ const findUserByEmail = (email, users) => {
       return user;
     };
   };
-  return null;
+  return undefined;
 };
 // user registation
 const regUserId = function (email, password, users) {
@@ -33,19 +33,11 @@ const emptyInput = function (email, password) {
 // User authentication
 const authenticateUser = (email, password, users) => {
   const user = findUserByEmail(email, users);
-  if (!user) {
-    emailExists = false;
-  } else {
-    emailExists = true;
-  }
   if (user && bcrypt.compareSync(password, user.password)) {
-    passwordExists = true;
     return user;
-  } else {
-    passwordExists = false;
   }
   console.log("Password is incorrect");
-  return null
+  return null;
 };
 
 // generate function
