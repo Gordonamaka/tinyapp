@@ -26,3 +26,8 @@ Check Docs file for screenshots of the web application.
 
 - Install all dependencies (using the `npm install` command).
 - Run the development web server using the `node express_server.js` command.
+- Run Npm start to run the app locally, which includes:
+  - Package imports (const express = require("express");)
+  - Local imports (const { getUserByEmail } = require('./helpers');) (The rest of the imports exist in helperfunctions.js, all labelled). 
+  - Constants (const PORT = 8080;)
+  - Middlewares (app.set("view engine", "ejs");)
