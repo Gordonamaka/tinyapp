@@ -21,16 +21,8 @@ const regUserId = function (email, password, users) {
   };
   return userId
 };
-// no input helper function
-const emptyInput = function (email, password) {
-  // const email = req.body["email"];
-  // const password = req.body["password"];
-  if (email || password === '') {
-    // res.status(400).send('Sorry, user must fill in their email & password to register');
-    return
-  };
-};
-// User authentication
+
+//authenticateUser function
 const authenticateUser = (email, password, users) => {
   const user = findUserByEmail(email, users);
   if (user && bcrypt.compareSync(password, user.password)) {
@@ -65,7 +57,6 @@ module.exports = {
   generateRandomString,
   savedUrls,
   authenticateUser,
-  emptyInput,
   findUserByEmail,
   regUserId
 
