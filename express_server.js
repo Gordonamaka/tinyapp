@@ -1,21 +1,16 @@
+// Package Imports
 const express = require("express");
 const { name } = require("ejs");
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
-const { savedUrls, authenticateUser, emptyInput, findUserByEmail, regUserId, generateRandomString } = require("./helperfunctions");
 const bcrypt = require('bcryptjs');
+//Local Imports
+const { savedUrls, authenticateUser, findUserByEmail, regUserId, generateRandomString } = require("./helperfunctions");
+//Constants
 const app = express();
 const PORT = 8080;
-app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieSession({
-  name: "session",
-  keys: ["Some way to encrypt the values", "Sugar smack sugar smack give me a smack and I'll smack ya back"]
-}));
-
 const password = "test1";
 const hashedPassword = bcrypt.hashSync(password, 10);
-
 const users = {
   "userRandomID": {
     id: 'userRandomID',
@@ -23,7 +18,6 @@ const users = {
     password: hashedPassword
   }
 };
-
 const urlDatabase = {
   b6UTxQ: {
     longURL: "http://www.lighthouselabs.ca",
@@ -34,12 +28,17 @@ const urlDatabase = {
     userID: "aJ48lW"
   }
 };
+//Middlewares
+app.set("view engine", "ejs");
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieSession({
+  name: "session",
+  keys: ["Some way to encrypt the values", "Sugar smack sugar smack give me a smack and I'll smack ya back"]
+}));
 
 // .post for login
 app.post("/login", (req, res) => {
-  console.log("Attempting to login");
-  const email = req.body.email;
-  const password = req.body.password;
+  const { email, password } = req.body;
   const authenticatedUser = authenticateUser(email, password, users);
  
   if (authenticatedUser && bcrypt.compareSync(password, authenticatedUser.password)) {
@@ -59,15 +58,13 @@ app.post("/logout", (req, res) => {
 
 // .post for register
 app.post("/register", (req, res) => {
-  const email = req.body["email"];
-  const password = req.body["password"];
+  const { email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
   
-  // emptyInput checks whether there's an input
-  if (emptyInput(email, password) === true) {
+  if (email === ""|| password === "") {
     return res.status(400).send("Error: You need to provide both an email and password to register!");
   };
-
+ 
   // UserExists checks if the email exists
   const userExist = findUserByEmail(email, users);
   
@@ -147,7 +144,11 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL: urlDatabase[shortURL].longURL
   };
 
-  console.log("templateVars", templateVars);
+  // fixed security hole that allowed non-users to access urls
+  if (!userId) {
+    return res.status(403).redirect("/login");
+  }
+
   res.render("urls_show", templateVars);
 });
 
@@ -204,6 +205,13 @@ app.post("/urls/:shortURL", (req, res) => {
     return res.send("Sorry, you dont have permission to edit another user's url! That's rude!");
   };
 
+  //consistent with new url creation, both need https
+  let longUrl = req.body.longURL;
+
+  if (longUrl && !(longUrl.includes('http'))) {
+    longUrl = `https://${longUrl}`
+  };
+
   urlDatabase[req.params.shortURL] = { longURL: `https://${req.body.longURL}`, userID: userId };
 
   req.session.user_id = userId;
@@ -224,9 +232,16 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-// main page with instructions
+// redirects to /urls if logged in, otherwise redirects to login.
 app.get("/", (req, res) => {
-  res.send("Hello! Add '/urls' to your address bar to continue to the tiny url website! If youre an existing user, please login! If youre new, please register with us to use our site.");
+  const userId = req.session.user_id;
+
+  if (userId) {
+    res.redirect("/urls")
+  } else if (!userId) {
+    res.redirect("/login")
+  };
+
 });
 
 app.listen(PORT, () => {
