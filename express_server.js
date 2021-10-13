@@ -82,19 +82,31 @@ app.post("/register", (req, res) => {
 
 // .get for user login
 app.get("/login", (req, res) => {
-  const templateVars = {
-    user: null
+  const userId = req.session.user_id;
+    
+  if (userId) {
+    return res.redirect("/urls")
   };
 
+  const templateVars = {
+  user: null
+  };
+  
   res.render('login', templateVars);
 });
 
 // .get for register page
 app.get("/register", (req, res) => {
+  const userId = req.session.user_id;
+  
+  if (userId) {
+    return res.redirect("/urls")
+  };
+
   const templateVars = {
     user: null
   };
-
+  
   res.render('register', templateVars);
 });
 
@@ -133,21 +145,35 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const userId = req.session.user_id;
   const shortURL = req.params.shortURL;
-  
+  // adding readability to limit redundancy*
+  const urlObject = urlDatabase[shortURL];
+  const urlExists = !!urlObject;
+
   // saves updatedShortUrls within the savedUrls function to our database
   const updatedShortUrl = savedUrls(userId, urlDatabase);
   
+  // if URL exists security bug, double !! turns it into a boolean
+  if (!urlExists) {
+    return res.status(400).send("The URL you requested does not exist.");
+  };
+
   const templateVars = {
     user: users[req.session.user_id],
     urls: updatedShortUrl,
     shortURL: shortURL,
-    longURL: urlDatabase[shortURL].longURL
+    longURL: urlObject.longURL
   };
 
   // fixed security hole that allowed non-users to access urls
   if (!userId) {
     return res.status(403).redirect("/login");
-  }
+  };
+  
+  // security with touching urls that do not belong to the user
+  if (userId !== urlObject.userID) {
+    return res.status(403).send("You did not create this URL, hence you do not have access to this URL.");
+  };
+
 
   res.render("urls_show", templateVars);
 });
